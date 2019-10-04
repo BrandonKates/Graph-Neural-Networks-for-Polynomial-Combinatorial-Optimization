@@ -1,4 +1,4 @@
-# graph-NNs-and-exact-optimization
+# Deep Reinforcement Learning for Polynomial Combinatorial Optimization
 ORIE 4741 Final Project
 Brandon Kates(bjk224), Peter Haddad (ph387), Michael Lapolla (mel259)
 
