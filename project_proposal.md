@@ -1,4 +1,4 @@
-Problem Statement
+<p><b>Problem Statement</b></p>
 Deep Neural Networks are ubiquitous for solving Natural Language Processing and Computer Vision tasks, and are revered as being able to solve any problem given the right model. There has been a clash between traditional optimization algorithms, which have rigorous mathematical proofs showing how they work, and deep learning ‘black box’ algorithms which work extremely well but which are much more difficult to understand. We want to evaluate the ability of deep learning models on more traditional optimization problems, like finding the minimum spanning tree of a graph, to see how they perform given some constraints.
 
 Motivation and Background
