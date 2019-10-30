@@ -1,3 +1,6 @@
 [submodule "graph-generation"]
 	path = graph-generation
 	url = https://github.com/BrandonKates/graph-generation.git
+[submodule "graph-convnet-tsp"]
+	path = graph-convnet-tsp
+	url = https://github.com/BrandonKates/graph-convnet-tsp.git
