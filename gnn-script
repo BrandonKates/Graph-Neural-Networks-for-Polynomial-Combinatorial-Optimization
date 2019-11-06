@@ -1,0 +1,12 @@
+#!/bin/bash
+
+if [ "$1" == "start" ]; then
+    gcloud compute instances start pytorch-vm --zone=us-west1-b
+elif [ "$1" == "stop" ]; then
+    gcloud compute instances stop pytorch-vm --zone=us-west1-b
+elif [ "$1" == "login" ]; then
+	gcloud beta compute --project "sincere-actor-257719" ssh --zone "us-west1-b" "jupyter@pytorch-vm" -- -L 8080:localhost:8080
+else
+	echo "Invalid Option. Options are: start, stop, login."
+fi
+
