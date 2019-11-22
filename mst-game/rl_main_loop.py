@@ -25,7 +25,7 @@ from absl import flags
 from open_spiel.python import rl_environment
 from open_spiel.python.algorithms import random_agent
 
-import mst_setup
+import mst_setup as mst
 
 FLAGS = flags.FLAGS
 
@@ -57,7 +57,7 @@ def main_loop(unused_arg):
   logging.info("Registered games: %s", rl_environment.registered_games())
   logging.info("Creating game %s", FLAGS.game)
 
-  env_configs = mst_setup.params(FLAGS.num_nodes)
+  env_configs = mst.params(FLAGS.num_nodes)
   env = rl_environment.Environment(FLAGS.game, **env_configs)
   num_actions = env.action_spec()["num_actions"]
 

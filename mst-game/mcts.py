@@ -29,7 +29,7 @@ from open_spiel.python.algorithms import mcts
 from open_spiel.python.bots import human
 from open_spiel.python.bots import uniform_random
 import pyspiel
-import mst_setup
+import mst_setup as mst
 
 
 _KNOWN_PLAYERS = ["mcts", "random", "human"]
@@ -136,16 +136,15 @@ def _play_game(game, bots, initial_actions):
 
 
 def main(argv):
-  game = pyspiel.load_game(FLAGS.game, mst_setup.spiel_params(FLAGS.num_nodes))
-  if game.num_players() > 2:
-    sys.exit("This game requires more players than the example can handle.")
-  bots = [_init_bot(FLAGS.player1, game, 0)]
+  games, rewards = mst.spiel_params(FLAGS.num_games, FLAGS.num_nodes)
   histories = collections.defaultdict(int)
   overall_returns = [0]
   overall_wins = [0]
   game_num = 0
   try:
     for game_num in range(FLAGS.num_games):
+      game = pyspiel.load_game(FLAGS.game, games[game_num])
+      bots = [_init_bot(FLAGS.player1, game, 0)]
       returns, history = _play_game(game, bots, argv[1:])
       histories[" ".join(history)] += 1
       for i, v in enumerate(returns):
@@ -155,10 +154,12 @@ def main(argv):
   except (KeyboardInterrupt, EOFError):
     game_num -= 1
     print("Caught a KeyboardInterrupt, stopping early.")
+  print("-"*80)
   print("Number of games played:", game_num + 1)
   print("Number of distinct games played:", len(histories))
   print("Overall wins", overall_wins)
   print("Overall returns", overall_returns)
+  print("Minimum Spanning Tree Returns: ", sum(rewards))
 
 
 if __name__ == "__main__":
