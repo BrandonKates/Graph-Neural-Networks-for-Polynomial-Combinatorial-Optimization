@@ -1,9 +1,8 @@
-
 import time
 import argparse
 import pprint as pp
 import os
-
+import pickle
 
 import networkx as nx
 import numpy as np
@@ -11,19 +10,19 @@ from scipy.spatial.distance import cdist
 from matplotlib import pyplot as plt
 
 class Args():
-    def __init__(self, args):
-        self.graph_type = args.graph_type #'random_geometric_graph'
-        self.num_graphs = args.num_graphs #10
-        self.num_nodes = args.num_nodes #10
-        self.prob = 0.5
-        self.use_random_weights = args.use_random_weights #Default: False
-        self.weight_fn = np.random.random
-        self.get_spanning_trees = args.get_spanning_trees #True
-        self.write_edges = args.write_edges #True
-        self.filename = args.filename
-        if self.filename is None:
-            self.filename = f"./data/mst{self.num_nodes}_{self.num_graphs}_{self.graph_type}.txt"
-        pp.pprint(vars(self))
+	def __init__(self, args):
+		self.graph_type = args.graph_type #'random_geometric_graph'
+		self.num_graphs = args.num_graphs #10
+		self.num_nodes = args.num_nodes #10
+		self.prob = 0.5
+		self.use_random_weights = args.use_random_weights #Default: False
+		self.weight_fn = np.random.random
+		self.get_spanning_trees = args.get_spanning_trees #True
+		self.write_edges = args.write_edges #True
+		self.filename = args.filename
+		if self.filename is None:
+			self.filename = f"./data/mst{self.num_nodes}_{self.num_graphs}_{self.graph_type}.txt"
+		pp.pprint(vars(self))
 
 def create(args):
 	graphs = []
@@ -59,46 +58,67 @@ def create(args):
 
 
 def get_generated_weights(graphs, num_nodes):
-    graph_weights = []
-    for G in graphs:
-        edge_weights = [np.inf]*(num_nodes * num_nodes)
-        for (u,v,weight) in G.edges.data():
-            weight = np.round(weight['weight'], 4)
-            edge_weights[u * num_nodes + v] = weight
-            edge_weights[v * num_nodes + u] = weight
-        generated_weights = ",".join(str(e) for e in edge_weights)
-        graph_weights.append(generated_weights)
-    return graph_weights
+	graph_weights = []
+	for G in graphs:
+		edge_weights = [np.inf]*(num_nodes * num_nodes)
+		for (u,v,weight) in G.edges.data():
+			weight = np.round(weight['weight'], 4)
+			edge_weights[u * num_nodes + v] = weight
+			edge_weights[v * num_nodes + u] = weight
+		generated_weights = ",".join(str(e) for e in edge_weights)
+		graph_weights.append(generated_weights)
+	return graph_weights
 
 def get_solutions(graphs, num_nodes):
-    MST_rewards = []
-    MSTS_edges = []
-    for T in graphs:
-        MST_sum = 0
-        MST_edges = []
-        for (u,v,weight) in T.edges.data():
-            weight = weight['weight']
-            edge_1, edge_2 = u * num_nodes + v, v * num_nodes + u
-            MST_sum += weight
-            MST_edges.append((edge_1, edge_2, weight))
-        MST_rewards.append(MST_sum)
-        MST_edges.append(MST_edges)
-    return MST_rewards, MST_edges
+	MST_rewards = []
+	MSTS_edges = []
+	for T in graphs:
+		MST_sum = 0
+		MST_edges = []
+		for (u,v,weight) in T.edges.data():
+			weight = weight['weight']
+			edge_1, edge_2 = u * num_nodes + v, v * num_nodes + u
+			MST_sum += weight
+			MST_edges.append((edge_1, edge_2, weight))
+		MST_rewards.append(MST_sum)
+		MST_edges.append(MST_edges)
+	return MST_rewards, MST_edges
 
-def generate_game_data(num_graphs, num_nodes):
-    args_list = ['--num_graphs',str(num_graphs),'--num_nodes',str(num_nodes)]
-    args = get_args(args_list)
-    graphs, msts, _ = create(args)
-    
-    graph_inputs = get_generated_weights(graphs, num_nodes)
-    graph_rewards, graph_edges = get_solutions(msts, num_nodes)
-    
-    
-    return {'inputs': graph_inputs,
-     'solutions': graph_edges,
-     'rewards': graph_rewards,
-     'num_nodes': num_nodes,
-     'num_graphs': num_graphs}
+def save_game_data(num_graphs, num_nodes, fname=None):
+	args_list = ['--num_graphs',str(num_graphs),'--num_nodes',str(num_nodes), '--write_edges', False]
+	args = get_args(args_list)
+
+	with open(fname, 'wb') as handle:
+		for i in range(num_graphs):
+			graphs, msts, _ = create(args)
+			graph_inputs = get_generated_weights(graphs, num_nodes)
+			graph_rewards, graph_edges = get_solutions(msts, num_nodes)
+			data = {'inputs': graph_inputs,
+					'solutions': graph_edges,
+					'rewards': graph_rewards,
+					'num_nodes': num_nodes,
+					'num_graphs': num_graphs}
+			pickle.dump(data, handle, protocol=pickle.HIGHEST_PROTOCOL)
+	return True
+
+def generate_game_data(num_graphs, num_nodes, save=False, fname=None):
+	args_list = ['--num_graphs',str(num_graphs),'--num_nodes',str(num_nodes), '--write_edges', False]
+	args = get_args(args_list)
+	graphs, msts, _ = create(args)
+	
+	graph_inputs = get_generated_weights(graphs, num_nodes)
+	graph_rewards, graph_edges = get_solutions(msts, num_nodes)
+	
+	data = {'inputs': graph_inputs,
+	 'solutions': graph_edges,
+	 'rewards': graph_rewards,
+	 'num_nodes': num_nodes,
+	 'num_graphs': num_graphs}
+
+	if save:
+		with open(fname, 'wb') as handle:
+			pickle.dump(data, handle, protocol=pickle.HIGHEST_PROTOCOL)
+	return data
 
 def write_edges(graphs, spanning_trees, poses, filename):
 	with open(filename, 'w') as f:
@@ -166,9 +186,9 @@ def get_args_from_parser(otherArgs):
 	return parser.parse_args(otherArgs)
 
 def main():
-    opts = get_args_from_parser(None)
-    args = Args(opts)
-    graphs, msts, poses, distances = create(args) # creates graphs and writes to file
+	opts = get_args_from_parser(None)
+	args = Args(opts)
+	graphs, msts, poses, distances = create(args) # creates graphs and writes to file
 
 if __name__ == "__main__":
 	main()
