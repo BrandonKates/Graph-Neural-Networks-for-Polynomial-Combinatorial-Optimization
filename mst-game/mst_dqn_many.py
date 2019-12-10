@@ -123,7 +123,7 @@ def main(_):
       random_agent.RandomAgent(player_id=idx, num_actions=num_actions)
       for idx in range(num_players)
   ]
-  gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.125)
+  gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.25)
   with tf.Session(config=tf.ConfigProto(gpu_options=gpu_options)) as sess:
     hidden_layers_sizes = [int(l) for l in FLAGS.hidden_layers_sizes]
     # pylint: disable=g-complex-comprehension
@@ -168,6 +168,6 @@ def main(_):
       for agent in agents:
         agent.step(time_step)
 
-    print("Actual MST: ", rewards)
+    #print("Actual MST: ", train_rewards)
 if __name__ == "__main__":
   app.run(main)

@@ -37,7 +37,7 @@ flags.DEFINE_string("checkpoint_dir", "/tmp/dqn_test",
 flags.DEFINE_integer("num_train_episodes", int(1e6),
                      "Number of training episodes.")
 flags.DEFINE_integer(
-    "eval_every", 1000,
+    "eval_every", 100,
     "Episode frequency at which the DQN agents are evaluated.")
 
 # DQN model hyper-parameters
@@ -81,8 +81,7 @@ def eval_against_random_bots(env, trained_agents, random_agents, num_episodes):
 def main(_):
   game = FLAGS.game
   num_players = 1
-  games, rewards = mst.game_params(10,#FLAGS.num_train_episodes, 
-                                    FLAGS.num_nodes)
+  games, rewards,_,_ = mst.game_params(FLAGS.num_nodes)
 
   env_configs = games[0]
   env = rl_environment.Environment(game, **env_configs)
@@ -116,7 +115,7 @@ def main(_):
 
     for ep in range(FLAGS.num_train_episodes):
       if (ep + 1) % FLAGS.eval_every == 0:
-        r_mean = eval_against_random_bots(env, agents, random_agents, 1000)
+        r_mean = eval_against_random_bots(env, agents, random_agents, 1)
         logging.info("[%s] Mean episode rewards %s", ep + 1, r_mean)
         saver.save(sess, FLAGS.checkpoint_dir, ep)
         print("Actual MST Value: ", rewards[0])
