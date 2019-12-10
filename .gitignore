@@ -1,3 +1,6 @@
 *.ipynb_checkpoints
 *pycache*
 *.pyc
+*.err
+*.out
+*.pickle
