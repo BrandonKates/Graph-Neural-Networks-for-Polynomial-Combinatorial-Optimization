@@ -85,11 +85,12 @@ def get_solutions(graphs, num_nodes):
 	return MST_rewards, MST_edges
 
 def save_game_data(num_graphs, num_nodes, fname=None):
-	args_list = ['--num_graphs',str(num_graphs),'--num_nodes',str(num_nodes), '--write_edges', False]
+	args_list = ['--num_graphs',str(1000),'--num_nodes',str(num_nodes), '--write_edges', False]
 	args = get_args(args_list)
 
 	with open(fname, 'wb') as handle:
-		for i in range(num_graphs):
+		data_list = []
+		for i in range(int(num_graphs/1000)):
 			graphs, msts, _ = create(args)
 			graph_inputs = get_generated_weights(graphs, num_nodes)
 			graph_rewards, graph_edges = get_solutions(msts, num_nodes)
@@ -98,7 +99,9 @@ def save_game_data(num_graphs, num_nodes, fname=None):
 					'rewards': graph_rewards,
 					'num_nodes': num_nodes,
 					'num_graphs': num_graphs}
-			pickle.dump(data, handle, protocol=pickle.HIGHEST_PROTOCOL)
+			data_list.append(data)
+		pickle.dump(data_list, handle, protocol=pickle.HIGHEST_PROTOCOL)
+		data_list=[]
 	return True
 
 def generate_game_data(num_graphs, num_nodes, save=False, fname=None):

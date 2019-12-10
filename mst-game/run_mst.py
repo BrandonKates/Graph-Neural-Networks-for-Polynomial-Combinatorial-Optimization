@@ -85,6 +85,9 @@ def main(_):
     state.apply_action(action)
 
     print(str(state))
+    
+    print("Information State: ", state.information_state_string())
+    print("Edge Values: ", dist_mat)
 
   # Game is now done. Print utilities for each player
   returns = state.returns()

@@ -29,7 +29,7 @@ import generate_graphs as graphgen
 import pickle
 
 
-def game_params(num_games, num_nodes):
+def game_params(num_nodes):
   #distances = np.random.random( (num_nodes, 2) )
   #dist_mat = np.round( distance_matrix(distances, distances), 2 ).flatten()
   #generated_weights = str(dist_mat[0])
@@ -37,8 +37,9 @@ def game_params(num_games, num_nodes):
   train_fname = "MST" + "_" + str(num_nodes) + '_train.pickle'
   test_fname = "MST" + "_" + str(num_nodes) + '_test.pickle'
   train_data, test_data = load_game_data(train_fname, test_fname)
-  game_configs, game_rewards = extract_info_from_loaded(train_data)
-  return game_configs, game_rewards
+  train_game_configs, train_game_rewards = extract_info_from_loaded(train_data)
+  test_game_configs, test_game_rewards = extract_info_from_loaded(test_data)
+  return train_game_configs, train_game_rewards, test_game_configs, test_game_rewards
 
 def extract_info_from_loaded(data):
     game_configs = []
