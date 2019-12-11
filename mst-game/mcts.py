@@ -24,6 +24,7 @@ import sys
 from absl import app
 from absl import flags
 import numpy as np
+import pandas as pd
 
 from open_spiel.python.algorithms import mcts
 from open_spiel.python.bots import human
@@ -35,6 +36,7 @@ import mst_setup as mst
 _KNOWN_PLAYERS = ["mcts", "random", "human"]
 
 flags.DEFINE_string("game", "mst", "Name of the game.")
+flags.DEFINE_string("game_version", "easy", "Version of the Game")
 flags.DEFINE_enum("player1", "mcts", _KNOWN_PLAYERS, "Who controls player 1.")
 flags.DEFINE_enum("player2", "random", _KNOWN_PLAYERS, "Who controls player 2.")
 flags.DEFINE_integer("uct_c", 2, "UCT's exploration constant.")
@@ -64,7 +66,6 @@ def _init_bot(bot_type, game, player_id):
     evaluator = mcts.RandomRolloutEvaluator(FLAGS.rollout_count, rng)
     return mcts.MCTSBot(
         game,
-        player_id,
         FLAGS.uct_c,
         FLAGS.max_simulations,
         evaluator,
@@ -118,7 +119,10 @@ def _play_game(game, bots, initial_actions):
     else:
       # Decision node: sample action for the single current player
       bot = bots[state.current_player()]
-      _, action = bot.step(state)
+      _opt_print("Legal Actions: ", state.legal_actions())
+      action = bot.step(state)
+      if not action:
+        return -1, -1
       action_str = state.action_to_string(state.current_player(), action)
       _opt_print("Player {} sampled action: {}".format(state.current_player(),
                                                        action_str))
@@ -134,23 +138,46 @@ def _play_game(game, bots, initial_actions):
         " ".join(history))
   return returns, history
 
-
+def save_rewards_as_csv(predicted_rewards, actual_rewards, num_nodes, game_version):
+    df = pd.DataFrame([], columns=["Actual_Rewards", "Predicted_Rewards"])
+    df.Actual_Rewards = actual_rewards
+    df.Predicted_Rewards = predicted_rewards
+    save_loc = "./mcts_results/"+str(game_version)+"/"+str(num_nodes)+"nodes_" + str(FLAGS.max_simulations)+"sims_" + str(FLAGS.rollout_count) + "rollouts.csv"
+    df.to_csv(save_loc, index=False)
+    
 def main(argv):
-  games, rewards = mst.spiel_params(FLAGS.num_games, FLAGS.num_nodes)
+  games, rewards = mst.spiel_params(FLAGS.num_nodes)
   histories = collections.defaultdict(int)
   overall_returns = [0]
   overall_wins = [0]
+  overall_mst_returns = 0
   game_num = 0
+  unfinished_games = 0
+    
+  predicted_returns = []
+  actual_returns = []
+
   try:
     for game_num in range(FLAGS.num_games):
+      print("Game Num: ", game_num)
       game = pyspiel.load_game(FLAGS.game, games[game_num])
+      game_reward = rewards[game_num]
+      _opt_print("*"*80)
+      _opt_print(game)
       bots = [_init_bot(FLAGS.player1, game, 0)]
       returns, history = _play_game(game, bots, argv[1:])
+      if returns == -1 and history == -1:
+        _opt_print("Game does not have enough edges.")
+        unfinished_games += 1
+        continue
+      print("Actual MST Returns: ", game_reward)
       histories[" ".join(history)] += 1
       for i, v in enumerate(returns):
         overall_returns[i] += v
-        if v > 0:
-          overall_wins[i] += 1
+      _opt_print("Game Reward: ", -1*game_reward)
+      overall_mst_returns+=game_reward
+      predicted_returns.append(returns[0])
+      actual_returns.append(game_reward)
   except (KeyboardInterrupt, EOFError):
     game_num -= 1
     print("Caught a KeyboardInterrupt, stopping early.")
@@ -159,8 +186,8 @@ def main(argv):
   print("Number of distinct games played:", len(histories))
   print("Overall wins", overall_wins)
   print("Overall returns", overall_returns)
-  print("Minimum Spanning Tree Returns: ", sum(rewards))
-
-
+  print("Overall MST returns", overall_mst_returns)
+  print("Unfinished Games: ", unfinished_games)
+  save_rewards_as_csv(predicted_returns, actual_returns, FLAGS.num_nodes, FLAGS.game_version)
 if __name__ == "__main__":
   app.run(main)

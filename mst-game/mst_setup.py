@@ -34,8 +34,8 @@ def game_params(num_nodes):
   #dist_mat = np.round( distance_matrix(distances, distances), 2 ).flatten()
   #generated_weights = str(dist_mat[0])
   #game_data = get_game_data(num_games, num_nodes)
-  train_fname = "MST" + "_" + str(num_nodes) + '_train.pickle'
-  test_fname = "MST" + "_" + str(num_nodes) + '_test.pickle'
+  train_fname = "MST_pickles/MST_PRUNE_" + str(num_nodes) + '_train.pickle'
+  test_fname = "MST_pickles/MST_PRUNE_" + str(num_nodes) + '_test.pickle'
   train_data, test_data = load_game_data(train_fname, test_fname)
   train_game_configs, train_game_rewards = extract_info_from_loaded(train_data)
   test_game_configs, test_game_rewards = extract_info_from_loaded(test_data)
@@ -53,8 +53,8 @@ def extract_info_from_loaded(data):
       game_rewards.append(data['rewards'][i])
     return game_configs, game_rewards
 
-def spiel_params(num_games, num_nodes):
-    configs, rewards = game_params(num_games, num_nodes)
+def spiel_params(num_nodes):
+    configs, rewards,_,_ = game_params(num_nodes)
     env_configs = [{k:pyspiel.GameParameter(v) for k,v in args.items()} for args in configs]
     return env_configs, rewards
     

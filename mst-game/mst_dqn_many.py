@@ -85,6 +85,9 @@ def eval_against_random_bots(env, trained_agents, random_agents, num_episodes):
   return sum_episode_rewards / num_episodes
 
 def test_trained_bot(test_games, test_rewards, agent, epoch, num_nodes, game, game_version):
+  test_games = [test_games[0]]
+  test_rewards =[test_rewards[0]]
+
   sum_episode_rewards = 0
   cur_agents = agent
   num_episodes = len(test_games)
@@ -94,16 +97,21 @@ def test_trained_bot(test_games, test_rewards, agent, epoch, num_nodes, game, ga
     time_step = env.reset() # (set new environment with random weights)
     actual_rewards  = test_rewards[i]
     episode_rewards = 0
+    num_actions_before_cycle = 0
     while not time_step.last():
       player_id = time_step.observations["current_player"]
       agent_output = cur_agents.step(time_step, is_evaluation=True)
       action_list = [agent_output.action]
       time_step = env.step(action_list)
       episode_rewards += time_step.rewards[0]
-  
+      print("(Action, Reward): ", action_list[0], time_step.rewards[0])
+      num_actions_before_cycle+=1
+    print("Actual Rewards: ", actual_rewards)
+    print("Episode Rewards: ", episode_rewards)
+    print("Num Actions Before Cycle: ", num_actions_before_cycle)
     sum_episode_rewards += (actual_rewards - episode_rewards) # compute the distance away from expected MST
     all_episode_rewards.append(episode_rewards)
-  save_rewards_as_csv(all_episode_rewards, test_rewards, epoch, num_nodes, game_version)
+  #save_rewards_as_csv(all_episode_rewards, test_rewards, epoch, num_nodes, game_version)
   return sum_episode_rewards / num_episodes
 
 def main(_):
@@ -123,7 +131,7 @@ def main(_):
       random_agent.RandomAgent(player_id=idx, num_actions=num_actions)
       for idx in range(num_players)
   ]
-  gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.25)
+  gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.125)
   with tf.Session(config=tf.ConfigProto(gpu_options=gpu_options)) as sess:
     hidden_layers_sizes = [int(l) for l in FLAGS.hidden_layers_sizes]
     # pylint: disable=g-complex-comprehension
@@ -140,17 +148,18 @@ def main(_):
     saver = tf.train.Saver()
     sess.run(tf.global_variables_initializer())
     
-    #saver = tf.train.import_meta_graph('/home/jupyter/ORIE-GNN-bjk224/mst-game/dqn_checkpoints/dqn_20epochs_mst_easy/dqn_test-689999.meta')
-    #saver.restore(sess, tf.train.latest_checkpoint('/home/jupyter/ORIE-GNN-bjk224/mst-game/dqn_checkpoints/dqn_20epochs_mst_easy/'))
+    #saver = tf.train.import_meta_graph('/home/jupyter/ORIE-GNN-bjk224/mst-game/dqn_checkpoints/dqn_20epochs_mst_medium/dqn_test-399999.meta')
+    #saver.restore(sess, tf.train.latest_checkpoint('/home/jupyter/ORIE-GNN-bjk224/mst-game/dqn_checkpoints/dqn_20epochs_mst_medium/'))
     
     for ep in range(FLAGS.num_train_episodes):
-      env_configs = train_games[ep % len(train_games)]
-      env = rl_environment.Environment(game, **env_configs)
+      print(env_configs)
+      #env_configs = train_games[ep % len(train_games)]
+      #env = rl_environment.Environment(game, **env_configs)
       episode_reward = train_rewards[ep % len(train_games)]
       if (ep + 1) % FLAGS.eval_every == 0:
-        r_mean = eval_against_random_bots(env, agents, random_agents, 10)
+        r_mean = eval_against_random_bots(env, agents, random_agents, 0)
         logging.info("[%s] Mean episode rewards %s", ep + 1, r_mean)
-        saver.save(sess, FLAGS.checkpoint_dir, ep)
+        #saver.save(sess, FLAGS.checkpoint_dir, ep)
         print("Actual MST Value: ", episode_reward)
       if (ep + 1) % FLAGS.test_every == 0:
         test_accuracy = test_trained_bot(test_games, test_rewards, agents[0], ep, FLAGS.num_nodes, game, FLAGS.game_version)
@@ -158,11 +167,13 @@ def main(_):
 
       #env = rl_environment.Environment(game, **games[ep])
       time_step = env.reset()
+      # print("TRAIN"+"*"*80)
       while not time_step.last():
         player_id = time_step.observations["current_player"]
         agent_output = agents[player_id].step(time_step)
         action_list = [agent_output.action]
         time_step = env.step(action_list)
+        #print("(Action, Reward): ", action_list[0], time_step.rewards[0])
 
       # Episode is over, step all agents with final info state.
       for agent in agents:
