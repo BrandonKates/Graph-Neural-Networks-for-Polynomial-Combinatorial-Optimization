@@ -1,0 +1,2 @@
+model_checkpoint_path: "/home/jupyter/ORIE-GNN-bjk224/mst-game/dqn_checkpoints/dqn_20epochs_mst_medium/dqn_test-399999"
+all_model_checkpoint_paths: "/home/jupyter/ORIE-GNN-bjk224/mst-game/dqn_checkpoints/dqn_20epochs_mst_medium/dqn_test-499999"
